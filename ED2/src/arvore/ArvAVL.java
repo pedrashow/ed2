@@ -4,6 +4,7 @@ import java.util.NoSuchElementException;
 
 public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 	private No raiz;
+	private boolean mudouAltura;
 
 	private class No {
 		private Chave chave;
@@ -114,16 +115,24 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 	}
 
 	private No put(No x, Chave chave, Valor valor) {
-		if (x == null)
+		if (x == null) {
+			mudouAltura = true;
 			return new No(chave, valor);
+		}
 		int cmp = chave.compareTo(x.chave);
 		if (cmp < 0) {
 			x.esq = put(x.esq, chave, valor);
-			x.bal++;
+			if (mudouAltura)
+				x.bal++;
+			if (x.bal == 0)
+				mudouAltura = false;
 		}
 		else if (cmp > 0) {
 			x.dir = put(x.dir, chave, valor);
-			x.bal--;
+			if (mudouAltura)
+				x.bal--;
+			if (x.bal == 0)
+				mudouAltura = false;
 		}
 		else {
 			x.valor = valor;
@@ -137,10 +146,12 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 			if (x.dir.bal == 1)
 				x.dir = rotacionaDireita(x.dir);
 			x = rotacionaEsquerda(x);
+			mudouAltura = false;
 		} else if (x.bal > 1) {
 			if (x.esq.bal == -1)
 				x.esq = rotacionaEsquerda(x.esq);
 			x = rotacionaDireita(x);
+			mudouAltura = false;
 		}
 		return x;
 	}
@@ -151,6 +162,7 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 		raizParcial.dir = x;
 		x.bal = raizParcial.bal - 1;
 		raizParcial.bal = 0;
+		System.out.println("D " + x.valor);
 		return raizParcial;
 	}
 	
@@ -160,6 +172,7 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 		raizParcial.esq = x;
 		x.bal = raizParcial.bal + 1 ;
 		raizParcial.bal = 0;
+		System.out.println("E " + x.valor);
 		return raizParcial;
 	}
 	
