@@ -2,26 +2,32 @@ package arvore;
 
 import java.util.NoSuchElementException;
 
-public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
+public class ArvoreAVL<Chave extends Comparable<Chave>, Valor> {
 	private No raiz;
-	private boolean mudouAltura = false;
 
 	private class No {
 		private Chave chave;
 		private Valor valor;
 		private No esq, dir;
-		private int bal;
+		private int altura;
 
 		public No(Chave chave, Valor valor) {
 			this.chave = chave;
 			this.valor = valor;
 			this.esq = null;
 			this.dir = null;
-			this.bal = 0; //altura esquerda - altura direita
+			this.altura = 0;
+		}
+
+		public No(Chave chave, Valor valor, No esq, No dir) {
+			this.chave = chave;
+			this.valor = valor;
+			this.esq = esq;
+			this.dir = dir;
 		}
 	}
 
-	public ArvAVL() {
+	public ArvoreAVL() {
 		raiz = null;
 	}
 
@@ -39,7 +45,7 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 			return;
 		System.out.print("[");
 		mostra(x.esq);
-		System.out.print("<" + x.chave + "(" + x.bal + ")>");
+		System.out.print("<" + x.chave + "(" + calculaBal(x)  + ")" + ">");
 		mostra(x.dir);
 		System.out.print("]");
 	}
@@ -115,136 +121,61 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 	}
 
 	private No put(No x, Chave chave, Valor valor) {
-		if (x == null) {
-			mudouAltura = true;
+		if (x == null)
 			return new No(chave, valor);
-		}
 		int cmp = chave.compareTo(x.chave);
-		if (cmp < 0) {
+		if (cmp < 0)
 			x.esq = put(x.esq, chave, valor);
-			if (mudouAltura)
-				x.bal++;
-			if (x.bal == 0)
-				mudouAltura = false;
-		}
-		else if (cmp > 0) {
+		else if (cmp > 0)
 			x.dir = put(x.dir, chave, valor);
-			if (mudouAltura)
-				x.bal--;
-			if (x.bal == 0)
-				mudouAltura = false;
-		}
 		else {
 			x.valor = valor;
 			return x;
 		}
+		x.altura = Math.max(height(x.esq),height(x.dir)) + 1;
 		return balanceia(x);
 	}
 	
+	private int calculaBal(No x) {
+		return (height(x.esq) - height(x.dir));
+	}
+	
+	private int atualizaAltura(No x) {
+		return Math.max(height(x.dir), height(x.esq)) + 1;
+	}
+	
 	private No balanceia(No x) {
-		if (x.bal < -1) {
-			if (x.dir.bal > 0)
-				x.dir = rotacionaDireita(x.dir);
-			x = rotacionaEsquerda(x);
-			mudouAltura = false;
-		} else if (x.bal > 1) {
-			if (x.esq.bal < 0)
-				x.esq = rotacionaEsquerda(x.esq);
-			x = rotacionaDireita(x);
-			mudouAltura = false;
+		if (calculaBal(x) == -2) {
+			if (calculaBal(x.dir) == 1)
+				x.dir = rotacaoDireita(x.dir);
+			x = rotacaoEsquerda(x);
+		}
+		else if (calculaBal(x) == 2) {
+			if (calculaBal(x.esq) == -1)
+				x.esq = rotacaoEsquerda(x.esq);
+			x = rotacaoDireita(x);
 		}
 		return x;
 	}
 	
-	private No rotacionaDireita(No x) {
-		No raizParcial = x.esq;
+	private No rotacaoDireita(No x) {
+		No raizLocal = x.esq;
 		x.esq = x.esq.dir;
-		raizParcial.dir = x;
-		if (x.bal == 1) {
-			raizParcial.bal--;
-			x.bal = 0;
-		} else {
-			raizParcial.bal = 0;
-			if (x.esq == null & x.dir == null)
-				x.bal = 0;
-			else if (x.esq == null)
-				x.bal = -1;
-			else if (x.dir == null)
-				x.bal = 1;
-			else
-				x.bal = 0;
-		}
-		System.out.println("D " + x.valor);
-		return raizParcial;
+		raizLocal.dir = x;
+		x.altura = atualizaAltura(x);
+		raizLocal.altura = atualizaAltura(raizLocal);
+		return raizLocal;
 	}
 	
-	private No rotacionaEsquerda(No x) {
-		No raizParcial = x.dir;
+	private No rotacaoEsquerda(No x) {
+		No raizLocal = x.dir;
 		x.dir = x.dir.esq;
-		raizParcial.esq = x;
-		if (x.bal == -1) {
-			raizParcial.bal++;
-			x.bal = 0;
-		} else {
-			raizParcial.bal = 0;
-			if (x.esq == null & x.dir == null)
-				x.bal = 0;
-			else if (x.esq == null)
-				x.bal = -1;
-			else if (x.dir == null)
-				x.bal = 1;
-			else
-				x.bal = 0;
-		}
-		System.out.println("E " + x.valor);
-		return raizParcial;
+		raizLocal.esq = x;
+		x.altura = atualizaAltura(x);
+		raizLocal.altura = atualizaAltura(raizLocal);
+		return raizLocal;
 	}
-	
-	public boolean delete(Chave chave) {
-		raiz = delete(raiz, chave);
-		if (raiz != null)
-			return true;
-		else
-			return false;
-	}	
-	
-	private No delete(No x, Chave chave) {
-		if (x == null) {
-			return null;
-		}
-		int cmp = chave.compareTo(x.chave);
-		if (cmp < 0) {
-			x.esq = delete(x.esq, chave);
-			if (mudouAltura)
-				x.bal--;
-			if (x.bal != 0)
-				mudouAltura = false;
-		}
-		else if (cmp > 0) {
-			x.dir = delete(x.dir, chave);
-			if (mudouAltura)
-				x.bal++;
-			if (x.bal !=0)
-				mudouAltura = false;
-		}
-		else {
-			if (x.dir == null) {
-				mudouAltura = true;
-				return x.esq;
-			}
-			if (x.esq == null) {
-				mudouAltura = true;
-				return x.dir;
-			}
-			No t = x;
-			x = min(t.dir);
-			x.dir = deleteMin(t.dir);	
-			x.esq = t.esq;
-		}
-		return balanceia(x);
-	}
-	
-	
+
 	public void deleteMin() {
 		if (vazia())
 			throw new NoSuchElementException("A árvore está vazia!");
@@ -255,12 +186,7 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 		if (x.esq == null)
 			return x.dir;
 		x.esq = deleteMin(x.esq);
-		if (x.esq == null)
-			mudouAltura = true;
-		if (mudouAltura)
-			x.bal--;
-		if (x.bal == 0)
-			mudouAltura = false;
+		x.altura = atualizaAltura(x);
 		return balanceia(x);
 	}
 
@@ -274,10 +200,39 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 		if (x.dir == null)
 			return x.esq;
 		x.dir = deleteMax(x.dir);
-		return x;
+		x.altura = atualizaAltura(x);
+		return balanceia(x);
 	}
 
+	public boolean delete(Chave chave) {
+		raiz = delete(raiz, chave);
+		if (raiz != null)
+			return true;
+		else
+			return false;
+	}
 
+	private No delete(No x, Chave chave) {
+		if (x == null)
+			return null;
+		int cmp = chave.compareTo(x.chave);
+		if (cmp < 0)
+			x.esq = delete(x.esq, chave);
+		else if (cmp > 0)
+			x.dir = delete(x.dir, chave);
+		else {
+			if (x.dir == null)
+				return x.esq;
+			if (x.esq == null)
+				return x.dir;
+			No t = x;
+			x = min(t.dir);
+			x.dir = deleteMin(t.dir);
+			x.esq = t.esq;
+		}
+		x.altura = atualizaAltura(x);
+		return balanceia(x);
+	}
 
 	public Chave piso(Chave chave) {
 		if (chave == null)
@@ -357,7 +312,26 @@ public class ArvAVL<Chave extends Comparable<Chave>, Valor> {
 	private int height(No x) {
 		if (x == null)
 			return -1;
-		int maxHeight = Math.max(height(x.esq), height(x.dir));
-		return 1 + maxHeight;
+		return x.altura;
+	}
+	
+	/*
+	 * Metodo que gera uma árvore balanceada a partir de um array ordenado.
+	 * Chama o metodo recursivo para inserir os nós em uma árvore cuja chave é
+	 * um inteiro.
+	 */
+	
+	public void geraArvBal(Valor[] arrayOrdenado) {
+		this.raiz = criaArvBal(arrayOrdenado,0, arrayOrdenado.length-1);
+	}
+	
+	private No criaArvBal(Valor[] array, int inicio, int fim) {
+		if (inicio > fim)
+			return null;
+		Integer meio = (inicio + fim) /2;
+		No novo = new No((Chave)meio,array[meio]);
+		novo.esq = criaArvBal(array,inicio,meio-1);
+		novo.dir = criaArvBal(array,meio+1,fim);
+		return novo;
 	}
 }
