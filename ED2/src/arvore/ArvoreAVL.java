@@ -132,7 +132,7 @@ public class ArvoreAVL<Chave extends Comparable<Chave>, Valor> {
 			x.valor = valor;
 			return x;
 		}
-		x.altura = Math.max(height(x.esq),height(x.dir)) + 1;
+		x.altura = atualizaAltura(x);
 		return balanceia(x);
 	}
 	

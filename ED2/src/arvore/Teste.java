@@ -4,14 +4,6 @@ import java.util.Scanner;
 
 public class Teste {
 	public static void main(String[] args) {
-		/*
-		ArvBinBusca<Integer,Integer> teste = new ArvBinBusca<>();
-		Integer[] arrayOrdenado = new Integer[15];
-		for (int i = 0; i < arrayOrdenado.length; i++)
-			arrayOrdenado[i] = i;
-		teste.geraArvBal(arrayOrdenado);
-		teste.mostra();
-		*/
 		ArvoreAVL<Integer,Integer> testeAVL = new ArvoreAVL<>();
 		Scanner in = new Scanner(System.in);
 		int entrada;
